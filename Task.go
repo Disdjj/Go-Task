@@ -7,7 +7,7 @@ import (
 
 type Task[T any] struct {
 	// return value
-	value *T
+	value T
 	// error when occur
 	error error
 
@@ -38,7 +38,7 @@ func (t *Task[T]) errorSolve(err error) {
 func (t *Task[T]) valueSolve(value T) {
 
 	t.once.Do(func() {
-		t.value = &value
+		t.value = value
 		close(t.ch)
 	})
 }
@@ -46,7 +46,7 @@ func (t *Task[T]) valueSolve(value T) {
 func (t *Task[T]) taskWrapper(task func() (T, error)) {
 	defer func() {
 		if err := recover(); err != nil {
-			t.errorSolve(errors.New("task panic"))
+			t.errorSolve(errors.New("Task Panic"))
 		}
 	}()
 
@@ -55,13 +55,21 @@ func (t *Task[T]) taskWrapper(task func() (T, error)) {
 		t.errorSolve(err)
 		return
 	}
-	println("t pointer", &t)
 	t.valueSolve(value)
 }
 
 // Await wait for the task to complete.
-func (t *Task[T]) Await() (*T, error) {
+func (t *Task[T]) Await() (T, error) {
 	<-t.ch
-	println("t pointer", &t)
 	return t.value, t.error
+}
+
+func (t *Task[T]) ContinueWith(p func(t T) (interface{}, error)) *Task[interface{}] {
+	return NewTask(func() (interface{}, error) {
+		await, err := t.Await()
+		if err != nil {
+			return nil, err
+		}
+		return p(await)
+	})
 }
