@@ -22,6 +22,22 @@ func TestBasicRun(t *testing.T) {
 	}
 }
 
+func TestBasicPoolRun(t *testing.T) {
+	p := NewTaskRunPool[string](func() (string, error) {
+		return "123", nil
+	})
+
+	value, err := p.Await()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if value != "123" {
+		//print(value)
+		t.Error("value is not 123")
+	}
+}
+
 func TestBasicError(t *testing.T) {
 	p := NewTask[string](func() (string, error) {
 		return "", errors.New("return")
