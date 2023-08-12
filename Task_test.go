@@ -33,6 +33,18 @@ func TestBasicError(t *testing.T) {
 	}
 }
 
+func TestPanic(t *testing.T) {
+	p := NewTask[string](func() (string, error) {
+		panic(errors.New("return"))
+		//return "", errors.New("return")
+	})
+
+	_, err := p.Await()
+	if err == nil {
+		t.Error("")
+	}
+}
+
 func TestTask_ContinueWith(t *testing.T) {
 	preTask := NewTask[string](func() (string, error) {
 		time.Sleep(1 * time.Second)

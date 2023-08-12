@@ -2,6 +2,7 @@ package DJJPromise
 
 import (
 	"errors"
+	"github.com/sourcegraph/conc"
 	"sync"
 )
 
@@ -18,13 +19,17 @@ type Task[T any] struct {
 	once sync.Once
 }
 
+var taskPool = conc.WaitGroup{}
+
 // NewTask create a new task instance.
 func NewTask[T any](task func() (T, error)) *Task[T] {
 	t := &Task[T]{
 		ch:   make(chan struct{}),
 		once: sync.Once{},
 	}
-	go t.taskWrapper(task)
+	taskPool.Go(func() {
+		t.taskWrapper(task)
+	})
 	return t
 }
 
